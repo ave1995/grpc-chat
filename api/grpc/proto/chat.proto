@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package chat;
 
-option go_package = "grpc-chat/api/grpc/proto;proto";
+option go_package = "github.com/ave1995/grpc-chat/api/grpc/proto;proto";
 
 // Represents a single chat message
 message Message {

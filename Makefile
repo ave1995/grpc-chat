@@ -1,2 +1,5 @@
 generate-proto:
-	protoc --go_out=. --go-grpc_out=. api/grpc/proto/chat.proto
+	protoc -I. \
+		--go_out=. --go_opt=paths=source_relative \
+		--go-grpc_out=. --go-grpc_opt=paths=source_relative \
+		api/grpc/proto/chat.proto
