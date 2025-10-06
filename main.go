@@ -18,7 +18,7 @@ import (
 func main() {
 	lis, err := net.Listen("tcp", ":50051")
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		log.Fatalf("to listen: %v", err)
 		os.Exit(1)
 	}
 
@@ -31,7 +31,7 @@ func main() {
 
 	gorm, err := gormdb.NewGormConnection(mainContext, cfg.DBConfig())
 	if err != nil {
-		log.Fatalf("failed to ini database connection %v", err)
+		log.Fatalf("ini database connection %v", err)
 		os.Exit(1)
 	}
 
@@ -44,6 +44,6 @@ func main() {
 
 	log.Println("gRPC server listening on :50051")
 	if err := grpcServer.Serve(lis); err != nil {
-		log.Fatalf("failed to serve: %v", err)
+		log.Fatalf("to serve: %v", err)
 	}
 }

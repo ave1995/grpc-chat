@@ -25,7 +25,7 @@ func (s *ChatServer) SendMessage(ctx context.Context, msg *pb.Message) (*pb.Ack,
 		return nil, err
 	}
 
-	log.Printf("Message sent: %s", created.Text)
+	log.Printf("message sent: %s", created.Text)
 	return &pb.Ack{Message: "Message stored successfully"}, nil
 }
 
@@ -50,18 +50,18 @@ func (s *ChatServer) GetMessage(ctx context.Context, req *pb.MessageRequest) (*p
 
 // Bidirectional stream: Chat
 func (s *ChatServer) Chat(stream pb.ChatService_ChatServer) error {
-	log.Println("Chat stream opened")
+	log.Println("chat stream opened")
 
 	for {
 		// Receive message from client
 		msg, err := stream.Recv()
 		if err != nil {
 			// client closed stream
-			log.Printf("Chat stream closed: %v", err)
+			log.Printf("chat stream closed: %v", err)
 			return err
 		}
 
-		log.Printf("Received message: %s", msg.Text)
+		log.Printf("received message: %s", msg.Text)
 
 		// Store message — your service sets timestamp etc.
 		stored, err := s.messageService.SendMessage(stream.Context(), msg.Text)
