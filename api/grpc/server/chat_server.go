@@ -19,18 +19,19 @@ func NewChatServer(messageService service.MessageService) *ChatServer {
 }
 
 // Unary: SendMessage
-func (s *ChatServer) SendMessage(ctx context.Context, msg *pb.Message) (*pb.Ack, error) {
-	created, err := s.messageService.SendMessage(ctx, msg.Text)
+func (s *ChatServer) SendMessage(ctx context.Context, msg *pb.SendMessageRequest) (*pb.SendMessageResponse, error) {
+	created, err := s.messageService.SendMessage(ctx, msg.Message.Text)
 	if err != nil {
 		return nil, err
 	}
 
 	log.Printf("message sent: %s", created.Text)
-	return &pb.Ack{Message: "Message stored successfully"}, nil
+	// TODO: better response
+	return &pb.SendMessageResponse{Message: "Message stored successfully", Id: created.ID.String()}, nil
 }
 
 // Unary: GetMessage
-func (s *ChatServer) GetMessage(ctx context.Context, req *pb.MessageRequest) (*pb.Message, error) {
+func (s *ChatServer) GetMessage(ctx context.Context, req *pb.GetMessageRequest) (*pb.GetMessageResponse, error) {
 	id, err := uuid.Parse(req.Id)
 	if err != nil {
 		return nil, err
@@ -41,10 +42,10 @@ func (s *ChatServer) GetMessage(ctx context.Context, req *pb.MessageRequest) (*p
 		return nil, err
 	}
 
-	return &pb.Message{
-		Id:        found.ID.String(),
-		Text:      found.Text,
-		Timestamp: found.Timestamp.Unix(),
+	return &pb.GetMessageResponse{
+		Message: &pb.Message{
+			Text: found.Text,
+		},
 	}, nil
 }
 
@@ -72,9 +73,7 @@ func (s *ChatServer) Chat(stream pb.ChatService_ChatServer) error {
 
 		// Echo back the stored version (now with ID + timestamp)
 		if err := stream.Send(&pb.Message{
-			Id:        stored.ID.String(),
-			Text:      stored.Text,
-			Timestamp: stored.Timestamp.Unix(),
+			Text: stored.Text,
 		}); err != nil {
 			log.Printf("failed to send back: %v", err)
 			return err

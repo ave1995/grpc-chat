@@ -31,9 +31,9 @@ const (
 // The ChatService defines gRPC methods for chat
 type ChatServiceClient interface {
 	// Unary RPC — send a single message, get confirmation
-	SendMessage(ctx context.Context, in *Message, opts ...grpc.CallOption) (*Ack, error)
+	SendMessage(ctx context.Context, in *SendMessageRequest, opts ...grpc.CallOption) (*SendMessageResponse, error)
 	// Unary RPC — get a single message by ID
-	GetMessage(ctx context.Context, in *MessageRequest, opts ...grpc.CallOption) (*Message, error)
+	GetMessage(ctx context.Context, in *GetMessageRequest, opts ...grpc.CallOption) (*GetMessageResponse, error)
 	// Bidirectional streaming — real-time chat
 	Chat(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[Message, Message], error)
 }
@@ -46,9 +46,9 @@ func NewChatServiceClient(cc grpc.ClientConnInterface) ChatServiceClient {
 	return &chatServiceClient{cc}
 }
 
-func (c *chatServiceClient) SendMessage(ctx context.Context, in *Message, opts ...grpc.CallOption) (*Ack, error) {
+func (c *chatServiceClient) SendMessage(ctx context.Context, in *SendMessageRequest, opts ...grpc.CallOption) (*SendMessageResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Ack)
+	out := new(SendMessageResponse)
 	err := c.cc.Invoke(ctx, ChatService_SendMessage_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -56,9 +56,9 @@ func (c *chatServiceClient) SendMessage(ctx context.Context, in *Message, opts .
 	return out, nil
 }
 
-func (c *chatServiceClient) GetMessage(ctx context.Context, in *MessageRequest, opts ...grpc.CallOption) (*Message, error) {
+func (c *chatServiceClient) GetMessage(ctx context.Context, in *GetMessageRequest, opts ...grpc.CallOption) (*GetMessageResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Message)
+	out := new(GetMessageResponse)
 	err := c.cc.Invoke(ctx, ChatService_GetMessage_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -86,9 +86,9 @@ type ChatService_ChatClient = grpc.BidiStreamingClient[Message, Message]
 // The ChatService defines gRPC methods for chat
 type ChatServiceServer interface {
 	// Unary RPC — send a single message, get confirmation
-	SendMessage(context.Context, *Message) (*Ack, error)
+	SendMessage(context.Context, *SendMessageRequest) (*SendMessageResponse, error)
 	// Unary RPC — get a single message by ID
-	GetMessage(context.Context, *MessageRequest) (*Message, error)
+	GetMessage(context.Context, *GetMessageRequest) (*GetMessageResponse, error)
 	// Bidirectional streaming — real-time chat
 	Chat(grpc.BidiStreamingServer[Message, Message]) error
 	mustEmbedUnimplementedChatServiceServer()
@@ -101,10 +101,10 @@ type ChatServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedChatServiceServer struct{}
 
-func (UnimplementedChatServiceServer) SendMessage(context.Context, *Message) (*Ack, error) {
+func (UnimplementedChatServiceServer) SendMessage(context.Context, *SendMessageRequest) (*SendMessageResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendMessage not implemented")
 }
-func (UnimplementedChatServiceServer) GetMessage(context.Context, *MessageRequest) (*Message, error) {
+func (UnimplementedChatServiceServer) GetMessage(context.Context, *GetMessageRequest) (*GetMessageResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetMessage not implemented")
 }
 func (UnimplementedChatServiceServer) Chat(grpc.BidiStreamingServer[Message, Message]) error {
@@ -132,7 +132,7 @@ func RegisterChatServiceServer(s grpc.ServiceRegistrar, srv ChatServiceServer) {
 }
 
 func _ChatService_SendMessage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Message)
+	in := new(SendMessageRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -144,13 +144,13 @@ func _ChatService_SendMessage_Handler(srv interface{}, ctx context.Context, dec 
 		FullMethod: ChatService_SendMessage_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ChatServiceServer).SendMessage(ctx, req.(*Message))
+		return srv.(ChatServiceServer).SendMessage(ctx, req.(*SendMessageRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _ChatService_GetMessage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MessageRequest)
+	in := new(GetMessageRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -162,7 +162,7 @@ func _ChatService_GetMessage_Handler(srv interface{}, ctx context.Context, dec f
 		FullMethod: ChatService_GetMessage_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ChatServiceServer).GetMessage(ctx, req.(*MessageRequest))
+		return srv.(ChatServiceServer).GetMessage(ctx, req.(*GetMessageRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }

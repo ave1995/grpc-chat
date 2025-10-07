@@ -21,6 +21,7 @@ func NewMessageStore(gorm *gorm.DB) store.MessageStore {
 // CreateMessage implements store.MessageStore.
 func (m *messageStore) CreateMessage(ctx context.Context, text string) (*model.Message, error) {
 	message := &message{
+		ID:        uuid.New(),
 		Text:      text,
 		Timestamp: time.Now(),
 	}
