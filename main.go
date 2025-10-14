@@ -13,12 +13,13 @@ import (
 	"github.com/ave1995/grpc-chat/config"
 	"github.com/ave1995/grpc-chat/service/message"
 	gormdb "github.com/ave1995/grpc-chat/store/gormdb"
+	"github.com/ave1995/grpc-chat/store/kafka"
 )
 
 func main() {
 	lis, err := net.Listen("tcp", ":50051")
 	if err != nil {
-		log.Fatalf("to listen: %v", err)
+		log.Fatalf("listen: %v", err)
 		os.Exit(1)
 	}
 
@@ -37,7 +38,13 @@ func main() {
 
 	messageStore := gormdb.NewMessageStore(gorm)
 
-	messageService := message.NewMessageService(messageStore)
+	producer, err := kafka.NewKafkaProducer(cfg.KafkaConfig())
+	if err != nil {
+		log.Fatalf("ini kafka producer: %v", err)
+	}
+
+	// TODO: make topic configurable
+	messageService := message.NewMessageService(messageStore, producer, "messages")
 
 	grpcServer := grpc.NewServer()
 	pb.RegisterChatServiceServer(grpcServer, server.NewChatServer(messageService))
