@@ -10,7 +10,7 @@ import (
 )
 
 type ChatServer struct {
-	pb.UnimplementedChatServiceServer
+	pb.ChatServiceServer
 	messageService service.MessageService
 }
 
