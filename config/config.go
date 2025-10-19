@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
@@ -45,6 +46,6 @@ func (c Config) DBConfig() DBConfig {
 
 func (c Config) KafkaConfig() KafkaConfig {
 	return KafkaConfig{
-		Brokers: c.Brokers,
+		Brokers: strings.Split(c.Brokers, ","),
 	}
 }

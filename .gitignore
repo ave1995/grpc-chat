@@ -1,3 +1,2 @@
 .env
-kafka-data/
-db-data/
+.data/
