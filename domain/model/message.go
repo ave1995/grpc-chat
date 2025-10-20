@@ -6,7 +6,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type MessageID uuid.UUID
+type MessageID uuid.UUID // Každý typ bude mít svuj soubor
 
 type Message struct {
 	ID        MessageID

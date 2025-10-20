@@ -2,6 +2,8 @@ module github.com/ave1995/grpc-chat
 
 go 1.24.5
 
+// nechápu proč máš tady 4x require :D zkus si udělat upgrade Go na 1.25 píšeš to sem ručně nebo používaš command line?
+
 require (
 	github.com/google/uuid v1.6.0
 	google.golang.org/grpc v1.75.1

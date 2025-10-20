@@ -10,5 +10,6 @@ up:
 down:
 	docker-compose down
 
+# super název repair :D
 repair:
 	go mod tidy

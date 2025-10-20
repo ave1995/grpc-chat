@@ -26,7 +26,7 @@ func (m *messageStore) CreateMessage(ctx context.Context, text string) (*model.M
 		Timestamp: time.Now(),
 	}
 
-	if err := m.gorm.WithContext(ctx).Create(message).Error; err != nil {
+	if err := m.gorm.WithContext(ctx).Create(message).Error; err != nil { // message konflikt s názvem structu.
 		return nil, err
 	}
 
@@ -35,8 +35,10 @@ func (m *messageStore) CreateMessage(ctx context.Context, text string) (*model.M
 
 // GetMessage implements store.MessageStore.
 func (m *messageStore) GetMessage(ctx context.Context, id model.MessageID) (*model.Message, error) {
+	// Context je tu na okrasu asi
 	var message *message
 	if err := m.gorm.First(&message, "id = ?", uuid.UUID(id)).Error; err != nil {
+		// Nemáš tu ošetřený notfound
 		return nil, err
 	}
 

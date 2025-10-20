@@ -5,6 +5,7 @@ import (
 	"github.com/google/uuid"
 )
 
+// Otázka, že když tyhle structy používáš mimo package tak jestli by neměly být v modelu.
 type SubscriberID uuid.UUID
 
 type MessageSubscriber struct {

@@ -33,7 +33,7 @@ func (h *MessageHub) run(ctx context.Context) {
 				for _, subscriber := range h.subscribers {
 					close(subscriber.messages)
 				}
-				h.subscribers = make(map[SubscriberID]*MessageSubscriber)
+				h.subscribers = make(map[SubscriberID]*MessageSubscriber) // Proč tohle?
 			}()
 			return
 

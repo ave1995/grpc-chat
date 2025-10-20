@@ -23,6 +23,7 @@ const EnvPrefix = ""
 func NewConfig() (Config, error) {
 	var cfg Config
 
+	// Tímhle si ulehčuješ práci. V reálnem světe nikdy nebudeš mít .env file jan tak, že by se někde válel :D.
 	if err := godotenv.Load(); err != nil {
 		log.Println("No .env file found, using environment variables")
 	}

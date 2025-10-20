@@ -13,6 +13,7 @@ type producer struct {
 }
 
 func NewKafkaProducer(config config.KafkaConfig) connector.Producer {
+	// špatný formát
 	return &producer{writer: &kafka.Writer{
 		Addr:     kafka.TCP(config.Brokers...),
 		Balancer: &kafka.LeastBytes{},
@@ -25,7 +26,7 @@ func (p *producer) SendMessage(ctx context.Context, topic string, key string, va
 		Key:   []byte(key),
 		Value: []byte(value),
 	}
-	return p.writer.WriteMessages(ctx, msg)
+	return p.writer.WriteMessages(ctx, msg) // wrapuj errory, nebudeš vědět odkud ta chyba přišla.
 }
 
 func (p *producer) Close() error {

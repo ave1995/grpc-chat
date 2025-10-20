@@ -35,5 +35,6 @@ service ChatService {
   rpc GetMessage (GetMessageRequest) returns (GetMessageResponse);
 
   // Bidirectional streaming — real-time chat
+  // Uprav tu definici, ten strema v argumentu se ted nepoužívá
   rpc Chat (stream Message) returns (stream Message);
 }

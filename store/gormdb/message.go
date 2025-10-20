@@ -8,7 +8,7 @@ import (
 )
 
 type message struct {
-	ID        uuid.UUID `gorm:"type:uuid;primaryKey"`
+	ID        uuid.UUID `gorm:"type:uuid;primaryKey"` // dávej všem atributum gorm convenci i se jménem sloupce, je to potom jasný všem
 	Text      string
 	Timestamp time.Time
 }

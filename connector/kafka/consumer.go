@@ -21,6 +21,9 @@ func NewKafkaConsumer(brokers []string, topic string, groupID string) connector.
 	}
 }
 
+// Tohle sice nikde nepoužíváš, ale už je to takhle zvláštní. Asi nějaký příklad ne? Proč by si vracel Topic, když reader je
+// nastavený na konkretní topic? Výsledek bude asi překvapivý. Key nevím jestli je taky potřeba. Vracel bych už nějaký konkretní model.
+// Ten "consumer" by měl implementovat ideálně nějaký connector interface takže bude na něco určený.
 func (c *consumer) ReadMessage(ctx context.Context) (topic string, key string, value string, err error) {
 	msg, err := c.reader.ReadMessage(ctx)
 	if err != nil {
