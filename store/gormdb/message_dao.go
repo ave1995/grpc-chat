@@ -34,9 +34,9 @@ func (m *messageStore) CreateMessage(ctx context.Context, text string) (*model.M
 }
 
 // GetMessage implements store.MessageStore.
-func (m *messageStore) GetMessage(ctx context.Context, id uuid.UUID) (*model.Message, error) {
+func (m *messageStore) GetMessage(ctx context.Context, id model.MessageID) (*model.Message, error) {
 	var message *message
-	if err := m.gorm.First(&message, "id = ?", id).Error; err != nil {
+	if err := m.gorm.First(&message, "id = ?", uuid.UUID(id)).Error; err != nil {
 		return nil, err
 	}
 

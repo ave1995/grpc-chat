@@ -5,6 +5,8 @@ import (
 	"log"
 
 	pb "github.com/ave1995/grpc-chat/api/grpc/proto"
+	"github.com/ave1995/grpc-chat/connector"
+	"github.com/ave1995/grpc-chat/domain/model"
 	"github.com/ave1995/grpc-chat/domain/service"
 	"github.com/google/uuid"
 )
@@ -12,10 +14,11 @@ import (
 type ChatServer struct {
 	pb.ChatServiceServer
 	messageService service.MessageService
+	messageHub     *connector.MessageHub
 }
 
-func NewChatServer(messageService service.MessageService) *ChatServer {
-	return &ChatServer{messageService: messageService}
+func NewChatServer(messageService service.MessageService, messageHub *connector.MessageHub) *ChatServer {
+	return &ChatServer{messageService: messageService, messageHub: messageHub}
 }
 
 // Unary: SendMessage
@@ -25,6 +28,8 @@ func (s *ChatServer) SendMessage(ctx context.Context, msg *pb.SendMessageRequest
 		return nil, err
 	}
 
+	s.messageHub.Broadcast(created)
+
 	log.Printf("message sent: %s", created.Text)
 	// TODO: better response
 	return &pb.SendMessageResponse{Message: "Message stored successfully", Id: created.ID.String()}, nil
@@ -32,10 +37,12 @@ func (s *ChatServer) SendMessage(ctx context.Context, msg *pb.SendMessageRequest
 
 // Unary: GetMessage
 func (s *ChatServer) GetMessage(ctx context.Context, req *pb.GetMessageRequest) (*pb.GetMessageResponse, error) {
-	id, err := uuid.Parse(req.Id)
+	u, err := uuid.Parse(req.Id)
 	if err != nil {
 		return nil, err
 	}
+
+	id := model.MessageID(u)
 
 	found, err := s.messageService.GetMessage(ctx, id)
 	if err != nil {
@@ -53,30 +60,33 @@ func (s *ChatServer) GetMessage(ctx context.Context, req *pb.GetMessageRequest) 
 func (s *ChatServer) Chat(stream pb.ChatService_ChatServer) error {
 	log.Println("chat stream opened")
 
+	ctx := stream.Context()
+
+	subscriber := connector.NewSubscriber(connector.SubscriberID(uuid.New()), 10)
+
+	s.messageHub.Subscribe(subscriber)
+	defer s.messageHub.Unsubscribe(subscriber)
+
+	log.Printf("Client subscribed: %v", subscriber)
+
 	for {
-		// Receive message from client
-		msg, err := stream.Recv()
-		if err != nil {
-			// client closed stream
-			log.Printf("chat stream closed: %v", err)
-			return err
-		}
+		select {
+		case <-ctx.Done():
+			log.Printf("Client disconnected: %v", subscriber)
+			return nil
 
-		log.Printf("received message: %s", msg.Text)
-
-		// Store message — your service sets timestamp etc.
-		stored, err := s.messageService.SendMessage(stream.Context(), msg.Text)
-		if err != nil {
-			log.Printf("failed to store message: %v", err)
-			continue
-		}
-
-		// Echo back the stored version (now with ID + timestamp)
-		if err := stream.Send(&pb.Message{
-			Text: stored.Text,
-		}); err != nil {
-			log.Printf("failed to send back: %v", err)
-			return err
+		case msg, ok := <-subscriber.Messages():
+			if !ok {
+				return nil // hub closed
+			}
+			// Convert model.Message to protobuf message and send
+			err := stream.Send(&pb.Message{
+				Text: msg.Text,
+			})
+			if err != nil {
+				log.Printf("Send error: %v", err)
+				return err
+			}
 		}
 	}
 }

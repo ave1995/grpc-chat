@@ -15,7 +15,7 @@ type message struct {
 
 func (m *message) ToDomain() *model.Message {
 	return &model.Message{
-		ID:        m.ID,
+		ID:        model.MessageID(m.ID),
 		Text:      m.Text,
 		Timestamp: m.Timestamp,
 	}

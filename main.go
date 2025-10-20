@@ -11,6 +11,7 @@ import (
 	pb "github.com/ave1995/grpc-chat/api/grpc/proto"
 	"github.com/ave1995/grpc-chat/api/grpc/server"
 	"github.com/ave1995/grpc-chat/config"
+	"github.com/ave1995/grpc-chat/connector"
 	"github.com/ave1995/grpc-chat/connector/kafka"
 	"github.com/ave1995/grpc-chat/service/message"
 	"github.com/ave1995/grpc-chat/store/gormdb"
@@ -43,8 +44,10 @@ func main() {
 	// TODO: make topic configurable
 	messageService := message.NewMessageService(messageStore, producer, "messages")
 
+	hub := connector.NewMessageHub(mainContext, 10)
+
 	grpcServer := grpc.NewServer()
-	pb.RegisterChatServiceServer(grpcServer, server.NewChatServer(messageService))
+	pb.RegisterChatServiceServer(grpcServer, server.NewChatServer(messageService, hub))
 
 	log.Println("gRPC server listening on :50051")
 	if err := grpcServer.Serve(lis); err != nil {

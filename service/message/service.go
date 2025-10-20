@@ -7,7 +7,6 @@ import (
 	"github.com/ave1995/grpc-chat/domain/model"
 	"github.com/ave1995/grpc-chat/domain/service"
 	"github.com/ave1995/grpc-chat/domain/store"
-	"github.com/google/uuid"
 )
 
 type messageService struct {
@@ -24,7 +23,7 @@ func NewMessageService(store store.MessageStore, producer connector.Producer, to
 	}
 }
 
-func (m *messageService) GetMessage(ctx context.Context, id uuid.UUID) (*model.Message, error) {
+func (m *messageService) GetMessage(ctx context.Context, id model.MessageID) (*model.Message, error) {
 	return m.store.GetMessage(ctx, id)
 }
 
