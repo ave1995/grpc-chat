@@ -21,21 +21,22 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	ChatService_SendMessage_FullMethodName = "/chat.ChatService/SendMessage"
 	ChatService_GetMessage_FullMethodName  = "/chat.ChatService/GetMessage"
-	ChatService_Chat_FullMethodName        = "/chat.ChatService/Chat"
+	ChatService_Reader_FullMethodName      = "/chat.ChatService/Reader"
 )
 
 // ChatServiceClient is the client API for ChatService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// The ChatService defines gRPC methods for chat
+// ChatService provides APIs for sending, retrieving, and streaming chat messages.
 type ChatServiceClient interface {
-	// Unary RPC — send a single message, get confirmation
+	// Sends a single message and returns a confirmation response.
 	SendMessage(ctx context.Context, in *SendMessageRequest, opts ...grpc.CallOption) (*SendMessageResponse, error)
-	// Unary RPC — get a single message by ID
+	// Retrieves a specific message by its unique ID.
 	GetMessage(ctx context.Context, in *GetMessageRequest, opts ...grpc.CallOption) (*GetMessageResponse, error)
-	// Bidirectional streaming — real-time chat
-	Chat(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[Message, Message], error)
+	// Opens a server-side streaming connection that continuously
+	// delivers new messages to the client in real time.
+	Reader(ctx context.Context, in *ReaderRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[Message], error)
 }
 
 type chatServiceClient struct {
@@ -66,31 +67,38 @@ func (c *chatServiceClient) GetMessage(ctx context.Context, in *GetMessageReques
 	return out, nil
 }
 
-func (c *chatServiceClient) Chat(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[Message, Message], error) {
+func (c *chatServiceClient) Reader(ctx context.Context, in *ReaderRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[Message], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &ChatService_ServiceDesc.Streams[0], ChatService_Chat_FullMethodName, cOpts...)
+	stream, err := c.cc.NewStream(ctx, &ChatService_ServiceDesc.Streams[0], ChatService_Reader_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &grpc.GenericClientStream[Message, Message]{ClientStream: stream}
+	x := &grpc.GenericClientStream[ReaderRequest, Message]{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
 	return x, nil
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type ChatService_ChatClient = grpc.BidiStreamingClient[Message, Message]
+type ChatService_ReaderClient = grpc.ServerStreamingClient[Message]
 
 // ChatServiceServer is the server API for ChatService service.
 // All implementations must embed UnimplementedChatServiceServer
 // for forward compatibility.
 //
-// The ChatService defines gRPC methods for chat
+// ChatService provides APIs for sending, retrieving, and streaming chat messages.
 type ChatServiceServer interface {
-	// Unary RPC — send a single message, get confirmation
+	// Sends a single message and returns a confirmation response.
 	SendMessage(context.Context, *SendMessageRequest) (*SendMessageResponse, error)
-	// Unary RPC — get a single message by ID
+	// Retrieves a specific message by its unique ID.
 	GetMessage(context.Context, *GetMessageRequest) (*GetMessageResponse, error)
-	// Bidirectional streaming — real-time chat
-	Chat(grpc.BidiStreamingServer[Message, Message]) error
+	// Opens a server-side streaming connection that continuously
+	// delivers new messages to the client in real time.
+	Reader(*ReaderRequest, grpc.ServerStreamingServer[Message]) error
 	mustEmbedUnimplementedChatServiceServer()
 }
 
@@ -107,8 +115,8 @@ func (UnimplementedChatServiceServer) SendMessage(context.Context, *SendMessageR
 func (UnimplementedChatServiceServer) GetMessage(context.Context, *GetMessageRequest) (*GetMessageResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetMessage not implemented")
 }
-func (UnimplementedChatServiceServer) Chat(grpc.BidiStreamingServer[Message, Message]) error {
-	return status.Errorf(codes.Unimplemented, "method Chat not implemented")
+func (UnimplementedChatServiceServer) Reader(*ReaderRequest, grpc.ServerStreamingServer[Message]) error {
+	return status.Errorf(codes.Unimplemented, "method Reader not implemented")
 }
 func (UnimplementedChatServiceServer) mustEmbedUnimplementedChatServiceServer() {}
 func (UnimplementedChatServiceServer) testEmbeddedByValue()                     {}
@@ -167,12 +175,16 @@ func _ChatService_GetMessage_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ChatService_Chat_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(ChatServiceServer).Chat(&grpc.GenericServerStream[Message, Message]{ServerStream: stream})
+func _ChatService_Reader_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(ReaderRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(ChatServiceServer).Reader(m, &grpc.GenericServerStream[ReaderRequest, Message]{ServerStream: stream})
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type ChatService_ChatServer = grpc.BidiStreamingServer[Message, Message]
+type ChatService_ReaderServer = grpc.ServerStreamingServer[Message]
 
 // ChatService_ServiceDesc is the grpc.ServiceDesc for ChatService service.
 // It's only intended for direct use with grpc.RegisterService,
@@ -192,10 +204,9 @@ var ChatService_ServiceDesc = grpc.ServiceDesc{
 	},
 	Streams: []grpc.StreamDesc{
 		{
-			StreamName:    "Chat",
-			Handler:       _ChatService_Chat_Handler,
+			StreamName:    "Reader",
+			Handler:       _ChatService_Reader_Handler,
 			ServerStreams: true,
-			ClientStreams: true,
 		},
 	},
 	Metadata: "api/grpc/proto/chat.proto",

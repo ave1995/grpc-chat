@@ -10,5 +10,5 @@ up:
 down:
 	docker-compose down
 
-repair:
+tidy:
 	go mod tidy

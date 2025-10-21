@@ -41,13 +41,13 @@ func main() {
 
 	producer := kafka.NewKafkaProducer(cfg.KafkaConfig())
 
-	// TODO: make topic configurable
-	messageService := message.NewMessageService(messageStore, producer, "messages")
-
 	hub := connector.NewMessageHub(mainContext, 10)
 
+	// TODO: make topic configurable
+	messageService := message.NewMessageService(messageStore, producer, "messages", hub)
+
 	grpcServer := grpc.NewServer()
-	pb.RegisterChatServiceServer(grpcServer, server.NewChatServer(messageService, hub))
+	pb.RegisterChatServiceServer(grpcServer, server.NewChatServer(messageService))
 
 	log.Println("gRPC server listening on :50051")
 	if err := grpcServer.Serve(lis); err != nil {

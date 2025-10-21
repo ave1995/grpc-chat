@@ -2,10 +2,7 @@ package connector
 
 import (
 	"github.com/ave1995/grpc-chat/domain/model"
-	"github.com/google/uuid"
 )
-
-type SubscriberID uuid.UUID
 
 type MessageSubscriber struct {
 	id       SubscriberID

@@ -3,10 +3,8 @@ package model
 import (
 	"time"
 
-	"github.com/google/uuid"
+	pb "github.com/ave1995/grpc-chat/api/grpc/proto"
 )
-
-type MessageID uuid.UUID
 
 type Message struct {
 	ID        MessageID
@@ -14,7 +12,8 @@ type Message struct {
 	Timestamp time.Time
 }
 
-func (id MessageID) String() string {
-	u := uuid.UUID(id)
-	return u.String()
+func (m Message) ToProto() *pb.Message {
+	return &pb.Message{
+		Text: m.Text,
+	}
 }

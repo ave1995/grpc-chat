@@ -249,6 +249,42 @@ func (x *Message) GetText() string {
 	return ""
 }
 
+type ReaderRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReaderRequest) Reset() {
+	*x = ReaderRequest{}
+	mi := &file_api_grpc_proto_chat_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReaderRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReaderRequest) ProtoMessage() {}
+
+func (x *ReaderRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_grpc_proto_chat_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReaderRequest.ProtoReflect.Descriptor instead.
+func (*ReaderRequest) Descriptor() ([]byte, []int) {
+	return file_api_grpc_proto_chat_proto_rawDescGZIP(), []int{5}
+}
+
 var File_api_grpc_proto_chat_proto protoreflect.FileDescriptor
 
 const file_api_grpc_proto_chat_proto_rawDesc = "" +
@@ -264,12 +300,13 @@ const file_api_grpc_proto_chat_proto_rawDesc = "" +
 	"\x12GetMessageResponse\x12'\n" +
 	"\amessage\x18\x01 \x01(\v2\r.chat.MessageR\amessage\"\x1d\n" +
 	"\aMessage\x12\x12\n" +
-	"\x04text\x18\x01 \x01(\tR\x04text2\xbc\x01\n" +
+	"\x04text\x18\x01 \x01(\tR\x04text\"\x0f\n" +
+	"\rReaderRequest2\xc2\x01\n" +
 	"\vChatService\x12B\n" +
 	"\vSendMessage\x12\x18.chat.SendMessageRequest\x1a\x19.chat.SendMessageResponse\x12?\n" +
 	"\n" +
-	"GetMessage\x12\x17.chat.GetMessageRequest\x1a\x18.chat.GetMessageResponse\x12(\n" +
-	"\x04Chat\x12\r.chat.Message\x1a\r.chat.Message(\x010\x01B3Z1github.com/ave1995/grpc-chat/api/grpc/proto;protob\x06proto3"
+	"GetMessage\x12\x17.chat.GetMessageRequest\x1a\x18.chat.GetMessageResponse\x12.\n" +
+	"\x06Reader\x12\x13.chat.ReaderRequest\x1a\r.chat.Message0\x01B3Z1github.com/ave1995/grpc-chat/api/grpc/proto;protob\x06proto3"
 
 var (
 	file_api_grpc_proto_chat_proto_rawDescOnce sync.Once
@@ -283,23 +320,24 @@ func file_api_grpc_proto_chat_proto_rawDescGZIP() []byte {
 	return file_api_grpc_proto_chat_proto_rawDescData
 }
 
-var file_api_grpc_proto_chat_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_api_grpc_proto_chat_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_api_grpc_proto_chat_proto_goTypes = []any{
 	(*SendMessageRequest)(nil),  // 0: chat.SendMessageRequest
 	(*SendMessageResponse)(nil), // 1: chat.SendMessageResponse
 	(*GetMessageRequest)(nil),   // 2: chat.GetMessageRequest
 	(*GetMessageResponse)(nil),  // 3: chat.GetMessageResponse
 	(*Message)(nil),             // 4: chat.Message
+	(*ReaderRequest)(nil),       // 5: chat.ReaderRequest
 }
 var file_api_grpc_proto_chat_proto_depIdxs = []int32{
 	4, // 0: chat.SendMessageRequest.message:type_name -> chat.Message
 	4, // 1: chat.GetMessageResponse.message:type_name -> chat.Message
 	0, // 2: chat.ChatService.SendMessage:input_type -> chat.SendMessageRequest
 	2, // 3: chat.ChatService.GetMessage:input_type -> chat.GetMessageRequest
-	4, // 4: chat.ChatService.Chat:input_type -> chat.Message
+	5, // 4: chat.ChatService.Reader:input_type -> chat.ReaderRequest
 	1, // 5: chat.ChatService.SendMessage:output_type -> chat.SendMessageResponse
 	3, // 6: chat.ChatService.GetMessage:output_type -> chat.GetMessageResponse
-	4, // 7: chat.ChatService.Chat:output_type -> chat.Message
+	4, // 7: chat.ChatService.Reader:output_type -> chat.Message
 	5, // [5:8] is the sub-list for method output_type
 	2, // [2:5] is the sub-list for method input_type
 	2, // [2:2] is the sub-list for extension type_name
@@ -318,7 +356,7 @@ func file_api_grpc_proto_chat_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_grpc_proto_chat_proto_rawDesc), len(file_api_grpc_proto_chat_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   5,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

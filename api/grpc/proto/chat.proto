@@ -25,15 +25,18 @@ message Message {
   string text = 1;
 }
 
+message ReaderRequest {}
 
-// The ChatService defines gRPC methods for chat
+
+// ChatService provides APIs for sending, retrieving, and streaming chat messages.
 service ChatService {
-  // Unary RPC — send a single message, get confirmation
+  // Sends a single message and returns a confirmation response.
   rpc SendMessage (SendMessageRequest) returns (SendMessageResponse);
 
-  // Unary RPC — get a single message by ID
+  // Retrieves a specific message by its unique ID.
   rpc GetMessage (GetMessageRequest) returns (GetMessageResponse);
 
-  // Bidirectional streaming — real-time chat
-  rpc Chat (stream Message) returns (stream Message);
+  // Opens a server-side streaming connection that continuously
+  // delivers new messages to the client in real time.
+  rpc Reader (ReaderRequest) returns (stream Message);
 }
