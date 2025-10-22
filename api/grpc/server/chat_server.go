@@ -2,21 +2,25 @@ package server
 
 import (
 	"context"
-	"log"
+	"log/slog"
 
 	pb "github.com/ave1995/grpc-chat/api/grpc/proto"
 	"github.com/ave1995/grpc-chat/domain/model"
 	"github.com/ave1995/grpc-chat/domain/service"
+	"github.com/ave1995/grpc-chat/utils"
 	"github.com/google/uuid"
 )
 
 type ChatServer struct {
 	pb.ChatServiceServer
+	logger         *slog.Logger
 	messageService service.MessageService
 }
 
-func NewChatServer(messageService service.MessageService) *ChatServer {
-	return &ChatServer{messageService: messageService}
+func NewChatServer(logger *slog.Logger, messageService service.MessageService) *ChatServer {
+	return &ChatServer{
+		logger:         logger,
+		messageService: messageService}
 }
 
 // Unary: SendMessage
@@ -25,7 +29,7 @@ func (s *ChatServer) SendMessage(ctx context.Context, msg *pb.SendMessageRequest
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("message sent: %s", created.Text)
+	s.logger.Info("message sent", "message", created.Text)
 	// TODO: better response
 	return &pb.SendMessageResponse{Message: "Message stored successfully", Id: created.ID.String()}, nil
 }
@@ -53,7 +57,7 @@ func (s *ChatServer) GetMessage(ctx context.Context, req *pb.GetMessageRequest) 
 
 // Server streaming
 func (s *ChatServer) Reader(req *pb.ReaderRequest, srv pb.ChatService_ReaderServer) error {
-	log.Println("server stream opened")
+	s.logger.Info("server stream opened")
 
 	subscriber, cleanup := s.messageService.NewSubscriberWithCleanup()
 	defer cleanup()
@@ -61,7 +65,7 @@ func (s *ChatServer) Reader(req *pb.ReaderRequest, srv pb.ChatService_ReaderServ
 	for {
 		select {
 		case <-srv.Context().Done():
-			log.Printf("server stream closed by disconnection of client: %v", subscriber)
+			s.logger.Info("server stream closed by disconnection of client: %v", "subscriber", subscriber)
 			return nil
 
 		// TODO: vyzkoušet situaci, když nekontroluji open a z channelu přijde nil, udělat test
@@ -71,7 +75,7 @@ func (s *ChatServer) Reader(req *pb.ReaderRequest, srv pb.ChatService_ReaderServ
 			}
 			err := srv.Send(msg.ToProto())
 			if err != nil {
-				log.Printf("Send error: %v", err)
+				s.logger.Error("send error", utils.SlogError(err))
 				return err
 			}
 		}

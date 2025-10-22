@@ -2,20 +2,22 @@ package connector
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"sync"
 
 	"github.com/ave1995/grpc-chat/domain/model"
 )
 
 type MessageHub struct {
+	logger       *slog.Logger
 	subscribers  map[SubscriberID]*MessageSubscriber
 	broadcastQue chan *model.Message
 	mu           sync.Mutex
 }
 
-func NewMessageHub(ctx context.Context, capacity int) *MessageHub {
+func NewMessageHub(ctx context.Context, logger *slog.Logger, capacity int) *MessageHub {
 	h := &MessageHub{
+		logger:       logger,
 		subscribers:  make(map[SubscriberID]*MessageSubscriber),
 		broadcastQue: make(chan *model.Message, capacity),
 	}
@@ -45,7 +47,7 @@ func (h *MessageHub) run(ctx context.Context) {
 					select {
 					case subscriber.messages <- msg:
 					default:
-						log.Printf("Hub: dropped message for subscriber %v, channel full", subscriber)
+						h.logger.Warn("Hub: dropped message for subscriber, channel full", "subscriber", subscriber, "message", msg)
 					}
 				}
 			}()
@@ -69,6 +71,6 @@ func (h *MessageHub) Broadcast(msg *model.Message) {
 	select {
 	case h.broadcastQue <- msg:
 	default:
-		log.Printf("Hub: broadcast queue full, dropping message: %+v", msg)
+		h.logger.Warn("Hub: dropped message for broadcast, channel full", "message", msg)
 	}
 }

@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"log"
 	"net"
 	"os"
 
@@ -13,27 +12,32 @@ import (
 	"github.com/ave1995/grpc-chat/config"
 	"github.com/ave1995/grpc-chat/connector"
 	"github.com/ave1995/grpc-chat/connector/kafka"
+	"github.com/ave1995/grpc-chat/factory"
 	"github.com/ave1995/grpc-chat/service/message"
 	"github.com/ave1995/grpc-chat/store/gormdb"
+	"github.com/ave1995/grpc-chat/utils"
 )
 
 func main() {
-	lis, err := net.Listen("tcp", ":50051")
-	if err != nil {
-		log.Fatalf("listen: %v", err)
-		os.Exit(1)
-	}
-
 	cfg, err := config.NewConfig()
 	if err != nil {
 		panic(err)
+	}
+
+	factory := factory.NewFactory(cfg)
+	logger := factory.Logger()
+
+	lis, err := net.Listen("tcp", ":50051")
+	if err != nil {
+		logger.Error("listen: ", utils.SlogError(err))
+		os.Exit(1)
 	}
 
 	mainContext := context.Background()
 
 	gorm, err := gormdb.NewGormConnection(mainContext, cfg.DBConfig())
 	if err != nil {
-		log.Fatalf("ini database connection %v", err)
+		logger.Error("ini database connection: ", utils.SlogError(err))
 		os.Exit(1)
 	}
 
@@ -41,16 +45,17 @@ func main() {
 
 	producer := kafka.NewKafkaProducer(cfg.KafkaConfig())
 
-	hub := connector.NewMessageHub(mainContext, 10)
+	hub := connector.NewMessageHub(mainContext, logger, 10)
 
 	// TODO: make topic configurable
 	messageService := message.NewMessageService(messageStore, producer, "messages", hub)
 
 	grpcServer := grpc.NewServer()
-	pb.RegisterChatServiceServer(grpcServer, server.NewChatServer(messageService))
+	pb.RegisterChatServiceServer(grpcServer, server.NewChatServer(logger, messageService))
 
-	log.Println("gRPC server listening on :50051")
+	logger.Info("gRPC server listening on :50051")
 	if err := grpcServer.Serve(lis); err != nil {
-		log.Fatalf("to serve: %v", err)
+		logger.Error("to serve: ", utils.SlogError(err))
+		os.Exit(1)
 	}
 }
