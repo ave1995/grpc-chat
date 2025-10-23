@@ -2,6 +2,7 @@ package gormdb
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/ave1995/grpc-chat/domain/model"
@@ -9,6 +10,8 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
+
+var _ store.MessageStore = (*messageStore)(nil)
 
 type messageStore struct {
 	gorm *gorm.DB
@@ -18,27 +21,28 @@ func NewMessageStore(gorm *gorm.DB) store.MessageStore {
 	return &messageStore{gorm: gorm}
 }
 
-// CreateMessage implements store.MessageStore.
 func (m *messageStore) CreateMessage(ctx context.Context, text string) (*model.Message, error) {
-	message := &message{
+	msg := &message{
 		ID:        uuid.New(),
 		Text:      text,
 		Timestamp: time.Now(),
 	}
 
-	if err := m.gorm.WithContext(ctx).Create(message).Error; err != nil {
+	if err := m.gorm.WithContext(ctx).Create(msg).Error; err != nil {
 		return nil, err
 	}
 
-	return message.ToDomain(), nil
+	return msg.ToDomain(), nil
 }
 
-// GetMessage implements store.MessageStore.
 func (m *messageStore) GetMessage(ctx context.Context, id model.MessageID) (*model.Message, error) {
-	var message *message
-	if err := m.gorm.First(&message, "id = ?", uuid.UUID(id)).Error; err != nil {
+	var msg *message
+	if err := m.gorm.WithContext(ctx).First(&msg, "id = ?", uuid.UUID(id)).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, model.ErrNotFound
+		}
 		return nil, err
 	}
 
-	return message.ToDomain(), nil
+	return msg.ToDomain(), nil
 }

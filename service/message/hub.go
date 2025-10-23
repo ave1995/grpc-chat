@@ -1,4 +1,4 @@
-package connector
+package message
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 
 type MessageHub struct {
 	logger       *slog.Logger
-	subscribers  map[SubscriberID]*MessageSubscriber
+	subscribers  map[model.SubscriberID]*model.MessageSubscriber
 	broadcastQue chan *model.Message
 	mu           sync.Mutex
 }
@@ -18,7 +18,7 @@ type MessageHub struct {
 func NewMessageHub(ctx context.Context, logger *slog.Logger, capacity int) *MessageHub {
 	h := &MessageHub{
 		logger:       logger,
-		subscribers:  make(map[SubscriberID]*MessageSubscriber),
+		subscribers:  make(map[model.SubscriberID]*model.MessageSubscriber),
 		broadcastQue: make(chan *model.Message, capacity),
 	}
 	go h.run(ctx)
@@ -33,9 +33,8 @@ func (h *MessageHub) run(ctx context.Context) {
 				h.mu.Lock()
 				defer h.mu.Unlock()
 				for _, subscriber := range h.subscribers {
-					close(subscriber.messages)
+					subscriber.Close()
 				}
-				h.subscribers = make(map[SubscriberID]*MessageSubscriber)
 			}()
 			return
 
@@ -44,27 +43,23 @@ func (h *MessageHub) run(ctx context.Context) {
 				h.mu.Lock()
 				defer h.mu.Unlock()
 				for _, subscriber := range h.subscribers {
-					select {
-					case subscriber.messages <- msg:
-					default:
-						h.logger.Warn("Hub: dropped message for subscriber, channel full", "subscriber", subscriber, "message", msg)
-					}
+					subscriber.Push(msg)
 				}
 			}()
 		}
 	}
 }
 
-func (h *MessageHub) Subscribe(subscriber *MessageSubscriber) {
+func (h *MessageHub) Subscribe(subscriber *model.MessageSubscriber) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
-	h.subscribers[subscriber.id] = subscriber
+	h.subscribers[subscriber.ID()] = subscriber
 }
 
-func (h *MessageHub) Unsubscribe(subscriber *MessageSubscriber) {
+func (h *MessageHub) Unsubscribe(subscriber *model.MessageSubscriber) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
-	delete(h.subscribers, subscriber.id)
+	delete(h.subscribers, subscriber.ID())
 }
 
 func (h *MessageHub) Broadcast(msg *model.Message) {

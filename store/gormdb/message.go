@@ -9,8 +9,8 @@ import (
 
 type message struct {
 	ID        uuid.UUID `gorm:"type:uuid;primaryKey"`
-	Text      string
-	Timestamp time.Time
+	Text      string    `gorm:"type:text;not null"`
+	Timestamp time.Time `gorm:"not null;"`
 }
 
 func (m *message) ToDomain() *model.Message {

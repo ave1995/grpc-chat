@@ -2,11 +2,14 @@ package kafka
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/ave1995/grpc-chat/config"
 	"github.com/ave1995/grpc-chat/domain/connector"
 	"github.com/segmentio/kafka-go"
 )
+
+var _ connector.Producer = (*producer)(nil)
 
 type producer struct {
 	writer *kafka.Writer
@@ -26,7 +29,12 @@ func (p *producer) SendMessage(ctx context.Context, topic string, key string, va
 		Key:   []byte(key),
 		Value: []byte(value),
 	}
-	return p.writer.WriteMessages(ctx, msg)
+	err := p.writer.WriteMessages(ctx, msg)
+	if err != nil {
+		return fmt.Errorf("producer send message: %w", err)
+	}
+
+	return nil
 }
 
 func (p *producer) Close() error {

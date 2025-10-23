@@ -30,7 +30,7 @@ func (s *ChatServer) SendMessage(ctx context.Context, msg *pb.SendMessageRequest
 		return nil, err
 	}
 	s.logger.Info("message sent", "message", created.Text)
-	// TODO: better response
+
 	return &pb.SendMessageResponse{Message: "Message stored successfully", Id: created.ID.String()}, nil
 }
 

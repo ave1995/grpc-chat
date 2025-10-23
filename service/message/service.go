@@ -3,27 +3,29 @@ package message
 import (
 	"context"
 
-	"github.com/ave1995/grpc-chat/connector"
-	cd "github.com/ave1995/grpc-chat/domain/connector"
+	"github.com/ave1995/grpc-chat/config"
+	"github.com/ave1995/grpc-chat/domain/connector"
 	"github.com/ave1995/grpc-chat/domain/model"
 	"github.com/ave1995/grpc-chat/domain/service"
 	"github.com/ave1995/grpc-chat/domain/store"
 	"github.com/google/uuid"
 )
 
+var _ service.MessageService = (*messageService)(nil)
+
 type messageService struct {
+	config     config.MessageServiceConfig
 	store      store.MessageStore
-	messageHub *connector.MessageHub
-	producer   cd.Producer
-	topic      string
+	messageHub *MessageHub
+	producer   connector.Producer
 }
 
-func NewMessageService(store store.MessageStore, producer cd.Producer, topic string, messageHub *connector.MessageHub) service.MessageService {
+func NewMessageService(config config.MessageServiceConfig, store store.MessageStore, producer connector.Producer, messageHub *MessageHub) service.MessageService {
 	return &messageService{
+		config:     config,
 		store:      store,
 		messageHub: messageHub,
 		producer:   producer,
-		topic:      topic,
 	}
 }
 
@@ -38,7 +40,7 @@ func (m *messageService) SendMessage(ctx context.Context, text string) (*model.M
 		return nil, err
 	}
 
-	err = m.producer.SendMessage(ctx, "messages", msg.ID.String(), msg.Text)
+	err = m.producer.SendMessage(ctx, m.config.Topic, msg.ID.String(), msg.Text)
 	if err != nil {
 		return nil, err
 	}
@@ -48,8 +50,8 @@ func (m *messageService) SendMessage(ctx context.Context, text string) (*model.M
 	return msg, nil
 }
 
-func (m *messageService) NewSubscriberWithCleanup() (*connector.MessageSubscriber, func()) {
-	subscriber := connector.NewSubscriber(connector.SubscriberID(uuid.New()), 10)
+func (m *messageService) NewSubscriberWithCleanup() (*model.MessageSubscriber, func()) {
+	subscriber := model.NewSubscriber(model.SubscriberID(uuid.New()), m.config.SubscriberCapacity)
 
 	m.messageHub.Subscribe(subscriber)
 	cleanup := func() { m.messageHub.Unsubscribe(subscriber) }

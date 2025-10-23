@@ -7,6 +7,8 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
+var _ connector.Consumer = (*consumer)(nil)
+
 type consumer struct {
 	reader *kafka.Reader
 }
