@@ -40,7 +40,7 @@ func (m *MessageService) SendMessage(ctx context.Context, text string) (*model.M
 		return nil, err
 	}
 
-	err = m.producer.SendMessage(ctx, m.config.Topic, msg.ID.String(), msg.Text)
+	err = m.producer.Send(ctx, m.config.Topic, msg.ID.String(), msg.Text)
 	if err != nil {
 		return nil, err
 	}
