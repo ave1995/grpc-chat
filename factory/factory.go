@@ -28,16 +28,16 @@ type Factory struct {
 	db     *gorm.DB
 	dbOnce sync.Once
 
-	messageStore     store.MessageStore
+	messageStore     *gormdb.MessageStore
 	messageStoreOnce sync.Once
 
-	kafkaProducer     connector.Producer
+	kafkaProducer     *kafka.Producer
 	kafkaProducerOnce sync.Once
 
 	hub     *message.MessageHub
 	hubOnce sync.Once
 
-	messageService     service.MessageService
+	messageService     *message.MessageService
 	messageServiceOnce sync.Once
 }
 

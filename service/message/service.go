@@ -11,17 +11,17 @@ import (
 	"github.com/google/uuid"
 )
 
-var _ service.MessageService = (*messageService)(nil)
+var _ service.MessageService = (*MessageService)(nil)
 
-type messageService struct {
+type MessageService struct {
 	config     config.MessageServiceConfig
 	store      store.MessageStore
 	messageHub *MessageHub
 	producer   connector.Producer
 }
 
-func NewMessageService(config config.MessageServiceConfig, store store.MessageStore, producer connector.Producer, messageHub *MessageHub) service.MessageService {
-	return &messageService{
+func NewMessageService(config config.MessageServiceConfig, store store.MessageStore, producer connector.Producer, messageHub *MessageHub) *MessageService {
+	return &MessageService{
 		config:     config,
 		store:      store,
 		messageHub: messageHub,
@@ -29,12 +29,12 @@ func NewMessageService(config config.MessageServiceConfig, store store.MessageSt
 	}
 }
 
-func (m *messageService) GetMessage(ctx context.Context, id model.MessageID) (*model.Message, error) {
+func (m *MessageService) GetMessage(ctx context.Context, id model.MessageID) (*model.Message, error) {
 	return m.store.GetMessage(ctx, id)
 }
 
 // TODO: outbox transactional pattern
-func (m *messageService) SendMessage(ctx context.Context, text string) (*model.Message, error) {
+func (m *MessageService) SendMessage(ctx context.Context, text string) (*model.Message, error) {
 	msg, err := m.store.CreateMessage(ctx, text)
 	if err != nil {
 		return nil, err
@@ -45,12 +45,10 @@ func (m *messageService) SendMessage(ctx context.Context, text string) (*model.M
 		return nil, err
 	}
 
-	m.messageHub.Broadcast(msg)
-
 	return msg, nil
 }
 
-func (m *messageService) NewSubscriberWithCleanup() (*model.MessageSubscriber, func()) {
+func (m *MessageService) NewSubscriberWithCleanup() (*model.MessageSubscriber, func()) {
 	subscriber := model.NewSubscriber(model.SubscriberID(uuid.New()), m.config.SubscriberCapacity)
 
 	m.messageHub.Subscribe(subscriber)

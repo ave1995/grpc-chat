@@ -11,17 +11,17 @@ import (
 	"gorm.io/gorm"
 )
 
-var _ store.MessageStore = (*messageStore)(nil)
+var _ store.MessageStore = (*MessageStore)(nil)
 
-type messageStore struct {
+type MessageStore struct {
 	gorm *gorm.DB
 }
 
-func NewMessageStore(gorm *gorm.DB) store.MessageStore {
-	return &messageStore{gorm: gorm}
+func NewMessageStore(gorm *gorm.DB) *MessageStore {
+	return &MessageStore{gorm: gorm}
 }
 
-func (m *messageStore) CreateMessage(ctx context.Context, text string) (*model.Message, error) {
+func (m *MessageStore) CreateMessage(ctx context.Context, text string) (*model.Message, error) {
 	msg := &message{
 		ID:        uuid.New(),
 		Text:      text,
@@ -35,7 +35,7 @@ func (m *messageStore) CreateMessage(ctx context.Context, text string) (*model.M
 	return msg.ToDomain(), nil
 }
 
-func (m *messageStore) GetMessage(ctx context.Context, id model.MessageID) (*model.Message, error) {
+func (m *MessageStore) GetMessage(ctx context.Context, id model.MessageID) (*model.Message, error) {
 	var msg *message
 	if err := m.gorm.WithContext(ctx).First(&msg, "id = ?", uuid.UUID(id)).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {

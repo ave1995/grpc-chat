@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"net"
 	"os"
 	"os/signal"
@@ -13,6 +12,7 @@ import (
 	pb "github.com/ave1995/grpc-chat/api/grpc/proto"
 	"github.com/ave1995/grpc-chat/api/grpc/server"
 	"github.com/ave1995/grpc-chat/config"
+	"github.com/ave1995/grpc-chat/connector/kafka"
 	"github.com/ave1995/grpc-chat/factory"
 	"github.com/ave1995/grpc-chat/utils"
 )
@@ -31,17 +31,20 @@ func main() {
 
 	lis, err := net.Listen("tcp", ":50051")
 	if err != nil {
-		logger.Error("listen: ", utils.SlogError(err))
+		logger.Error("net.listen", utils.SlogError(err))
 		os.Exit(1)
 	}
 
 	grpcServer := grpc.NewServer()
 	pb.RegisterChatServiceServer(grpcServer, server.NewChatServer(logger, factory.MessageService()))
 
+	consumer := kafka.NewKafkaConsumer(logger, cfg.KafkaConfig().Brokers, "messages", "", factory.Hub())
+	consumer.Start(ctx)
+
 	go func() {
 		logger.Info("gRPC server listening on :50051")
 		if err := grpcServer.Serve(lis); err != nil {
-			logger.Error("serve: ", utils.SlogError(err))
+			logger.Error("grpcServer.serve", utils.SlogError(err))
 			os.Exit(1)
 		}
 	}()
@@ -50,9 +53,13 @@ func main() {
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
 
 	sig := <-sigCh
-	logger.Info(fmt.Sprintf("Received signal: %v. Shutting down gracefully...", sig))
+	logger.Info("Received signal. Shutting down gracefully...", "signal", sig)
 
 	grpcServer.GracefulStop()
+
+	if err := consumer.Stop(); err != nil {
+		logger.Error("consumer.stop", utils.SlogError(err))
+	}
 
 	factory.Close()
 

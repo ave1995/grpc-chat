@@ -9,21 +9,21 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-var _ connector.Producer = (*producer)(nil)
+var _ connector.Producer = (*Producer)(nil)
 
-type producer struct {
+type Producer struct {
 	writer *kafka.Writer
 }
 
-func NewKafkaProducer(config config.KafkaConfig) connector.Producer {
-	return &producer{
+func NewKafkaProducer(config config.KafkaConfig) *Producer {
+	return &Producer{
 		writer: &kafka.Writer{
 			Addr:     kafka.TCP(config.Brokers...),
 			Balancer: &kafka.LeastBytes{},
 		}}
 }
 
-func (p *producer) SendMessage(ctx context.Context, topic string, key string, value string) error {
+func (p *Producer) SendMessage(ctx context.Context, topic string, key string, value string) error {
 	msg := kafka.Message{
 		Topic: topic,
 		Key:   []byte(key),
@@ -37,6 +37,6 @@ func (p *producer) SendMessage(ctx context.Context, topic string, key string, va
 	return nil
 }
 
-func (p *producer) Close() error {
+func (p *Producer) Close() error {
 	return p.writer.Close()
 }
