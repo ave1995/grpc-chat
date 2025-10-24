@@ -68,10 +68,9 @@ func (s *ChatServer) Reader(req *pb.ReaderRequest, srv pb.ChatService_ReaderServ
 			s.logger.Info("server stream closed by disconnection of client: %v", "subscriber", subscriber)
 			return nil
 
-		// TODO: vyzkoušet situaci, když nekontroluji open a z channelu přijde nil, udělat test
 		case msg, open := <-subscriber.Messages():
 			if !open {
-				return nil // hub closed
+				return nil
 			}
 			err := srv.Send(msg.ToProto())
 			if err != nil {
