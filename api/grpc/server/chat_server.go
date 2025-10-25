@@ -20,7 +20,8 @@ type ChatServer struct {
 func NewChatServer(logger *slog.Logger, messageService service.MessageService) *ChatServer {
 	return &ChatServer{
 		logger:         logger,
-		messageService: messageService}
+		messageService: messageService,
+	}
 }
 
 // Unary: SendMessage
