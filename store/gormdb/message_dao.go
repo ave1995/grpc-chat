@@ -2,8 +2,8 @@ package gormdb
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
-	"time"
 
 	"github.com/ave1995/grpc-chat/domain/model"
 	"github.com/ave1995/grpc-chat/domain/store"
@@ -22,17 +22,38 @@ func NewMessageStore(gorm *gorm.DB) *MessageStore {
 }
 
 func (m *MessageStore) CreateMessage(ctx context.Context, text string) (*model.Message, error) {
-	msg := &message{
-		ID:        uuid.New(),
-		Text:      text,
-		Timestamp: time.Now(),
-	}
+	var msg *message
 
-	if err := m.gorm.WithContext(ctx).Create(msg).Error; err != nil {
-		return nil, err
-	}
+	err := m.gorm.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		msg = &message{
+			ID:   uuid.New(),
+			Text: text,
+		}
 
-	return msg.ToDomain(), nil
+		if err := m.gorm.WithContext(ctx).Create(msg).Error; err != nil {
+			return err
+		}
+
+		payloadBytes, err := json.Marshal(msg)
+		if err != nil {
+			return err
+		}
+
+		outbox := &outboxEvent{
+			ID:        uuid.New(),
+			EventType: model.SendMessage,
+			Payload:   payloadBytes,
+			Status:    model.Pending,
+		}
+
+		if err := m.gorm.WithContext(ctx).Create(outbox).Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	return msg.ToDomain(), err
 }
 
 func (m *MessageStore) GetMessage(ctx context.Context, id model.MessageID) (*model.Message, error) {

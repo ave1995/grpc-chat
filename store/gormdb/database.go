@@ -20,7 +20,7 @@ func NewGormConnection(ctx context.Context, config config.DBConfig) (*gorm.DB, e
 		return nil, fmt.Errorf("gorm.Open: %w", err)
 	}
 
-	err = db.WithContext(ctx).AutoMigrate(&message{})
+	err = db.WithContext(ctx).AutoMigrate(&message{}, &outboxEvent{})
 	if err != nil {
 		return nil, fmt.Errorf("db.AutoMigrate: %w", err)
 	}

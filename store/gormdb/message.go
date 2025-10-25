@@ -10,7 +10,7 @@ import (
 type message struct {
 	ID        uuid.UUID `gorm:"type:uuid;primaryKey"`
 	Text      string    `gorm:"type:text;not null"`
-	Timestamp time.Time `gorm:"not null;"`
+	Timestamp time.Time `gorm:"not null;autoCreateTime"`
 }
 
 func (m *message) ToDomain() *model.Message {
