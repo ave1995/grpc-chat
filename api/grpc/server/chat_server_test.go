@@ -38,11 +38,11 @@ type fakeMessageService struct {
 	subscriber *model.MessageSubscriber
 }
 
-func (f *fakeMessageService) SendMessage(ctx context.Context, text string) (*model.Message, error) {
+func (f *fakeMessageService) Send(ctx context.Context, text string) (*model.Message, error) {
 	return nil, nil
 }
 
-func (f *fakeMessageService) GetMessage(ctx context.Context, id model.MessageID) (*model.Message, error) {
+func (f *fakeMessageService) Fetch(ctx context.Context, id model.MessageID) (*model.Message, error) {
 	return nil, nil
 }
 

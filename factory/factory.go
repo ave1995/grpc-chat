@@ -34,10 +34,10 @@ type Factory struct {
 	kafkaProducer     *kafka.Producer
 	kafkaProducerOnce sync.Once
 
-	hub     *message.MessageHub
+	hub     *message.Hub
 	hubOnce sync.Once
 
-	messageService     *message.MessageService
+	messageService     *message.Service
 	messageServiceOnce sync.Once
 }
 
@@ -88,9 +88,9 @@ func (f *Factory) KafkaProducer() connector.Producer {
 	return f.kafkaProducer
 }
 
-func (f *Factory) Hub() *message.MessageHub {
+func (f *Factory) Hub() *message.Hub {
 	f.hubOnce.Do(func() {
-		f.hub = message.NewMessageHub(f.context, f.Logger(), f.config.HubCapacity)
+		f.hub = message.NewHub(f.context, f.Logger(), f.config.HubCapacity)
 	})
 
 	return f.hub
@@ -98,7 +98,7 @@ func (f *Factory) Hub() *message.MessageHub {
 
 func (f *Factory) MessageService() service.MessageService {
 	f.messageServiceOnce.Do(func() {
-		f.messageService = message.NewMessageService(
+		f.messageService = message.NewService(
 			f.config.MessageServiceConfig(),
 			f.MessageStore(),
 			f.KafkaProducer(),

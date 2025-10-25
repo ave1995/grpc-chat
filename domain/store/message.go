@@ -7,6 +7,6 @@ import (
 )
 
 type MessageStore interface {
-	GetMessage(ctx context.Context, id model.MessageID) (*model.Message, error)
-	CreateMessage(ctx context.Context, text string) (*model.Message, error)
+	Fetch(ctx context.Context, id model.MessageID) (*model.Message, error)
+	Create(ctx context.Context, text string) (*model.Message, error)
 }

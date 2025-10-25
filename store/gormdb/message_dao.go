@@ -21,7 +21,7 @@ func NewMessageStore(gorm *gorm.DB) *MessageStore {
 	return &MessageStore{gorm: gorm}
 }
 
-func (m *MessageStore) CreateMessage(ctx context.Context, text string) (*model.Message, error) {
+func (m *MessageStore) Create(ctx context.Context, text string) (*model.Message, error) {
 	var msg *message
 
 	err := m.gorm.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
@@ -56,7 +56,7 @@ func (m *MessageStore) CreateMessage(ctx context.Context, text string) (*model.M
 	return msg.ToDomain(), err
 }
 
-func (m *MessageStore) GetMessage(ctx context.Context, id model.MessageID) (*model.Message, error) {
+func (m *MessageStore) Fetch(ctx context.Context, id model.MessageID) (*model.Message, error) {
 	var msg *message
 	if err := m.gorm.WithContext(ctx).First(&msg, "id = ?", uuid.UUID(id)).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {

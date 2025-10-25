@@ -24,7 +24,7 @@ func NewChatServer(logger *slog.Logger, messageService service.MessageService) *
 }
 
 func (s *ChatServer) SendMessage(ctx context.Context, msg *pb.SendMessageRequest) (*pb.SendMessageResponse, error) {
-	created, err := s.messageService.SendMessage(ctx, msg.Message.Text)
+	created, err := s.messageService.Send(ctx, msg.Message.Text)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +41,7 @@ func (s *ChatServer) GetMessage(ctx context.Context, req *pb.GetMessageRequest) 
 
 	id := model.MessageID(u)
 
-	found, err := s.messageService.GetMessage(ctx, id)
+	found, err := s.messageService.Fetch(ctx, id)
 	if err != nil {
 		return nil, err
 	}

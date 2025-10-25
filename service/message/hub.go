@@ -8,15 +8,15 @@ import (
 	"github.com/ave1995/grpc-chat/domain/model"
 )
 
-type MessageHub struct {
+type Hub struct {
 	logger       *slog.Logger
 	subscribers  map[model.SubscriberID]*model.MessageSubscriber
 	broadcastQue chan *model.Message
 	mu           sync.Mutex
 }
 
-func NewMessageHub(ctx context.Context, logger *slog.Logger, capacity int) *MessageHub {
-	h := &MessageHub{
+func NewHub(ctx context.Context, logger *slog.Logger, capacity int) *Hub {
+	h := &Hub{
 		logger:       logger,
 		subscribers:  make(map[model.SubscriberID]*model.MessageSubscriber),
 		broadcastQue: make(chan *model.Message, capacity),
@@ -25,7 +25,7 @@ func NewMessageHub(ctx context.Context, logger *slog.Logger, capacity int) *Mess
 	return h
 }
 
-func (h *MessageHub) run(ctx context.Context) {
+func (h *Hub) run(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
@@ -50,19 +50,19 @@ func (h *MessageHub) run(ctx context.Context) {
 	}
 }
 
-func (h *MessageHub) Subscribe(subscriber *model.MessageSubscriber) {
+func (h *Hub) Subscribe(subscriber *model.MessageSubscriber) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 	h.subscribers[subscriber.ID()] = subscriber
 }
 
-func (h *MessageHub) Unsubscribe(subscriber *model.MessageSubscriber) {
+func (h *Hub) Unsubscribe(subscriber *model.MessageSubscriber) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 	delete(h.subscribers, subscriber.ID())
 }
 
-func (h *MessageHub) Broadcast(msg *model.Message) {
+func (h *Hub) Broadcast(msg *model.Message) {
 	select {
 	case h.broadcastQue <- msg:
 	default:

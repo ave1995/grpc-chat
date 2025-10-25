@@ -19,12 +19,12 @@ var _ connector.Consumer = (*Consumer)(nil)
 type Consumer struct {
 	logger     *slog.Logger
 	reader     *kafka.Reader
-	messageHub *message.MessageHub
+	messageHub *message.Hub
 
 	wg sync.WaitGroup
 }
 
-func NewKafkaConsumer(logger *slog.Logger, brokers []string, topic, groupID string, hub *message.MessageHub) *Consumer {
+func NewKafkaConsumer(logger *slog.Logger, brokers []string, topic, groupID string, hub *message.Hub) *Consumer {
 	return &Consumer{
 		logger: logger,
 		reader: kafka.NewReader(kafka.ReaderConfig{

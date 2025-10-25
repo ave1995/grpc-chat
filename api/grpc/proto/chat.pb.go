@@ -305,7 +305,7 @@ const file_api_grpc_proto_chat_proto_rawDesc = "" +
 	"\vChatService\x12B\n" +
 	"\vSendMessage\x12\x18.chat.SendMessageRequest\x1a\x19.chat.SendMessageResponse\x12?\n" +
 	"\n" +
-	"GetMessage\x12\x17.chat.GetMessageRequest\x1a\x18.chat.GetMessageResponse\x12.\n" +
+	"Fetch\x12\x17.chat.GetMessageRequest\x1a\x18.chat.GetMessageResponse\x12.\n" +
 	"\x06Reader\x12\x13.chat.ReaderRequest\x1a\r.chat.Message0\x01B3Z1github.com/ave1995/grpc-chat/api/grpc/proto;protob\x06proto3"
 
 var (
@@ -332,11 +332,11 @@ var file_api_grpc_proto_chat_proto_goTypes = []any{
 var file_api_grpc_proto_chat_proto_depIdxs = []int32{
 	4, // 0: chat.SendMessageRequest.message:type_name -> chat.Message
 	4, // 1: chat.GetMessageResponse.message:type_name -> chat.Message
-	0, // 2: chat.ChatService.SendMessage:input_type -> chat.SendMessageRequest
-	2, // 3: chat.ChatService.GetMessage:input_type -> chat.GetMessageRequest
+	0, // 2: chat.ChatService.Send:input_type -> chat.SendMessageRequest
+	2, // 3: chat.ChatService.Fetch:input_type -> chat.GetMessageRequest
 	5, // 4: chat.ChatService.Reader:input_type -> chat.ReaderRequest
-	1, // 5: chat.ChatService.SendMessage:output_type -> chat.SendMessageResponse
-	3, // 6: chat.ChatService.GetMessage:output_type -> chat.GetMessageResponse
+	1, // 5: chat.ChatService.Send:output_type -> chat.SendMessageResponse
+	3, // 6: chat.ChatService.Fetch:output_type -> chat.GetMessageResponse
 	4, // 7: chat.ChatService.Reader:output_type -> chat.Message
 	5, // [5:8] is the sub-list for method output_type
 	2, // [2:5] is the sub-list for method input_type
