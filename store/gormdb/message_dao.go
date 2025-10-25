@@ -40,10 +40,11 @@ func (m *MessageStore) Create(ctx context.Context, text string) (*model.Message,
 		}
 
 		outbox := &outboxEvent{
-			ID:        uuid.New(),
-			EventType: model.SendMessage,
-			Payload:   payloadBytes,
-			Status:    model.Pending,
+			ID:          uuid.New(),
+			EventType:   model.SendMessage,
+			AggregateID: msg.ID,
+			Payload:     payloadBytes,
+			Status:      model.Pending,
 		}
 
 		if err := m.gorm.WithContext(ctx).Create(outbox).Error; err != nil {

@@ -1,5 +1,5 @@
 package config
 
 type HubConfig struct {
-	Capicity int
+	Capacity int
 }

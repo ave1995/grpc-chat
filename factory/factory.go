@@ -101,7 +101,6 @@ func (f *Factory) MessageService() service.MessageService {
 		f.messageService = message.NewService(
 			f.config.MessageServiceConfig(),
 			f.MessageStore(),
-			f.KafkaProducer(),
 			f.Hub(),
 		)
 	})

@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/ave1995/grpc-chat/config"
-	"github.com/ave1995/grpc-chat/domain/connector"
 	"github.com/ave1995/grpc-chat/domain/model"
 	"github.com/ave1995/grpc-chat/domain/service"
 	"github.com/ave1995/grpc-chat/domain/store"
@@ -17,15 +16,13 @@ type Service struct {
 	config     config.MessageServiceConfig
 	store      store.MessageStore
 	messageHub *Hub
-	producer   connector.Producer
 }
 
-func NewService(config config.MessageServiceConfig, store store.MessageStore, producer connector.Producer, messageHub *Hub) *Service {
+func NewService(config config.MessageServiceConfig, store store.MessageStore, messageHub *Hub) *Service {
 	return &Service{
 		config:     config,
 		store:      store,
 		messageHub: messageHub,
-		producer:   producer,
 	}
 }
 
@@ -35,11 +32,6 @@ func (m *Service) Fetch(ctx context.Context, id model.MessageID) (*model.Message
 
 func (m *Service) Send(ctx context.Context, text string) (*model.Message, error) {
 	msg, err := m.store.Create(ctx, text)
-	if err != nil {
-		return nil, err
-	}
-
-	err = m.producer.Send(ctx, m.config.Topic, msg.ID.String(), msg.Text)
 	if err != nil {
 		return nil, err
 	}

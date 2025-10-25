@@ -7,6 +7,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/ave1995/grpc-chat/service/message"
+	"github.com/ave1995/grpc-chat/store/gormdb"
 	"google.golang.org/grpc"
 
 	pb "github.com/ave1995/grpc-chat/api/grpc/proto"
@@ -26,8 +28,8 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	factory := factory.NewFactory(ctx, cfg)
-	logger := factory.Logger()
+	fact := factory.NewFactory(ctx, cfg)
+	logger := fact.Logger()
 
 	lis, err := net.Listen("tcp", ":50051")
 	if err != nil {
@@ -36,10 +38,15 @@ func main() {
 	}
 
 	grpcServer := grpc.NewServer()
-	pb.RegisterChatServiceServer(grpcServer, server.NewChatServer(logger, factory.MessageService()))
+	pb.RegisterChatServiceServer(grpcServer, server.NewChatServer(logger, fact.MessageService()))
 
-	consumer := kafka.NewKafkaConsumer(logger, cfg.KafkaConfig().Brokers, "messages", "", factory.Hub())
+	consumer := kafka.NewKafkaConsumer(logger, cfg.KafkaConfig().Brokers, "messages", "", fact.Hub())
 	consumer.Start(ctx)
+
+	outboxStore := gormdb.NewOutboxStore(fact.Database())
+
+	processor := message.NewProcessor(logger, cfg.MessageProcessorConfig(), outboxStore, fact.KafkaProducer())
+	processor.Start(ctx)
 
 	go func() {
 		logger.Info("gRPC server listening on :50051")
@@ -61,7 +68,7 @@ func main() {
 		logger.Error("consumer.stop", utils.SlogError(err))
 	}
 
-	factory.Close()
+	fact.Close()
 
 	cancel()
 

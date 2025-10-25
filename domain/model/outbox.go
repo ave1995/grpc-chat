@@ -8,8 +8,9 @@ import (
 )
 
 type OutboxEvent struct {
-	ID          uuid.UUID
+	ID          OutboxEventID
 	EventType   EventType
+	AggregateID uuid.UUID
 	Payload     json.RawMessage
 	Status      OutboxStatus
 	CreatedAt   time.Time

@@ -8,8 +8,6 @@ import (
 	"sync"
 
 	"github.com/ave1995/grpc-chat/domain/connector"
-	"github.com/ave1995/grpc-chat/domain/model"
-	"github.com/ave1995/grpc-chat/service/message"
 	"github.com/ave1995/grpc-chat/utils"
 	"github.com/segmentio/kafka-go"
 )
@@ -17,14 +15,14 @@ import (
 var _ connector.Consumer = (*Consumer)(nil)
 
 type Consumer struct {
-	logger     *slog.Logger
-	reader     *kafka.Reader
-	messageHub *message.Hub
+	logger      *slog.Logger
+	reader      *kafka.Reader
+	broadcaster connector.Broadcaster
 
 	wg sync.WaitGroup
 }
 
-func NewKafkaConsumer(logger *slog.Logger, brokers []string, topic, groupID string, hub *message.Hub) *Consumer {
+func NewKafkaConsumer(logger *slog.Logger, brokers []string, topic, groupID string, broadcaster connector.Broadcaster) *Consumer {
 	return &Consumer{
 		logger: logger,
 		reader: kafka.NewReader(kafka.ReaderConfig{
@@ -32,7 +30,7 @@ func NewKafkaConsumer(logger *slog.Logger, brokers []string, topic, groupID stri
 			Topic:   topic,
 			GroupID: groupID,
 		}),
-		messageHub: hub,
+		broadcaster: broadcaster,
 	}
 }
 
@@ -55,15 +53,16 @@ func (c *Consumer) Start(ctx context.Context) {
 
 			c.logger.Info("[Kafka] received message", "offset", msg.Offset, "key", string(msg.Key))
 
-			c.messageHub.Broadcast(&model.Message{
-				ID:   model.MessageID(msg.Key),
-				Text: string(msg.Value),
-			})
+			err = c.broadcaster.Broadcast(msg)
+			if err != nil {
+				c.logger.Error("[Kafka] Broadcast error: ", utils.SlogError(err))
+			}
 		}
 	}()
 }
 
 // Stop gracefully stops the consumer and waits for the read loop to exit.
+// TODO: maybe could it be done better
 func (c *Consumer) Stop() error {
 	c.logger.Info("[Kafka] stopping consumer...")
 	if err := c.reader.Close(); err != nil {

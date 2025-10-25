@@ -2,11 +2,16 @@ package message
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"sync"
 
+	"github.com/ave1995/grpc-chat/domain/connector"
 	"github.com/ave1995/grpc-chat/domain/model"
+	"github.com/segmentio/kafka-go"
 )
+
+var _ connector.Broadcaster = (*Hub)(nil)
 
 type Hub struct {
 	logger       *slog.Logger
@@ -62,10 +67,18 @@ func (h *Hub) Unsubscribe(subscriber *model.MessageSubscriber) {
 	delete(h.subscribers, subscriber.ID())
 }
 
-func (h *Hub) Broadcast(msg *model.Message) {
+func (h *Hub) Broadcast(event kafka.Message) error {
+	msg := &model.Message{
+		ID:   model.MessageID(event.Key),
+		Text: string(event.Value),
+	}
+
 	select {
 	case h.broadcastQue <- msg:
 	default:
-		h.logger.Warn("Hub: dropped message for broadcast, channel full", "message", msg)
+		h.logger.Warn("Hub: dropped message for broadcast, channel full", "message", event)
+		return errors.New("hub: broadcast queue full")
 	}
+
+	return nil
 }

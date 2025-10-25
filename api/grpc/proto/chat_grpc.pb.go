@@ -19,8 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ChatService_SendMessage_FullMethodName = "/chat.ChatService/Send"
-	ChatService_GetMessage_FullMethodName  = "/chat.ChatService/Fetch"
+	ChatService_SendMessage_FullMethodName = "/chat.ChatService/SendMessage"
+	ChatService_GetMessage_FullMethodName  = "/chat.ChatService/GetMessage"
 	ChatService_Reader_FullMethodName      = "/chat.ChatService/Reader"
 )
 
@@ -110,10 +110,10 @@ type ChatServiceServer interface {
 type UnimplementedChatServiceServer struct{}
 
 func (UnimplementedChatServiceServer) SendMessage(context.Context, *SendMessageRequest) (*SendMessageResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Send not implemented")
+	return nil, status.Errorf(codes.Unimplemented, "method SendMessage not implemented")
 }
 func (UnimplementedChatServiceServer) GetMessage(context.Context, *GetMessageRequest) (*GetMessageResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Fetch not implemented")
+	return nil, status.Errorf(codes.Unimplemented, "method GetMessage not implemented")
 }
 func (UnimplementedChatServiceServer) Reader(*ReaderRequest, grpc.ServerStreamingServer[Message]) error {
 	return status.Errorf(codes.Unimplemented, "method Reader not implemented")
@@ -194,11 +194,11 @@ var ChatService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*ChatServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Send",
+			MethodName: "SendMessage",
 			Handler:    _ChatService_SendMessage_Handler,
 		},
 		{
-			MethodName: "Fetch",
+			MethodName: "GetMessage",
 			Handler:    _ChatService_GetMessage_Handler,
 		},
 	},
