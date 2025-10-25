@@ -114,7 +114,11 @@ func (f *Factory) Close() {
 	logger.Info("shutting down factory components...")
 
 	if f.kafkaProducer != nil {
-		f.kafkaProducer.Close()
+		err := f.kafkaProducer.Close()
+		if err != nil {
+			logger.Error("kafka producer close: ", utils.SlogError(err))
+			return
+		}
 	}
 
 	if f.db != nil {

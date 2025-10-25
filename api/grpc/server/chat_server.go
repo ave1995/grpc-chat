@@ -23,7 +23,6 @@ func NewChatServer(logger *slog.Logger, messageService service.MessageService) *
 		messageService: messageService}
 }
 
-// Unary: SendMessage
 func (s *ChatServer) SendMessage(ctx context.Context, msg *pb.SendMessageRequest) (*pb.SendMessageResponse, error) {
 	created, err := s.messageService.SendMessage(ctx, msg.Message.Text)
 	if err != nil {
@@ -34,7 +33,6 @@ func (s *ChatServer) SendMessage(ctx context.Context, msg *pb.SendMessageRequest
 	return &pb.SendMessageResponse{Message: "Message stored successfully", Id: created.ID.String()}, nil
 }
 
-// Unary: GetMessage
 func (s *ChatServer) GetMessage(ctx context.Context, req *pb.GetMessageRequest) (*pb.GetMessageResponse, error) {
 	u, err := uuid.Parse(req.Id)
 	if err != nil {
@@ -55,8 +53,7 @@ func (s *ChatServer) GetMessage(ctx context.Context, req *pb.GetMessageRequest) 
 	}, nil
 }
 
-// Server streaming
-func (s *ChatServer) Reader(req *pb.ReaderRequest, srv pb.ChatService_ReaderServer) error {
+func (s *ChatServer) Reader(_ *pb.ReaderRequest, srv pb.ChatService_ReaderServer) error {
 	s.logger.Info("server stream opened")
 
 	subscriber, cleanup := s.messageService.NewSubscriberWithCleanup()
