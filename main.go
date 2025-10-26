@@ -64,10 +64,6 @@ func main() {
 
 	grpcServer.GracefulStop()
 
-	if err := consumer.Stop(); err != nil {
-		logger.Error("consumer.stop", utils.SlogError(err))
-	}
-
 	fact.Close()
 
 	cancel()
