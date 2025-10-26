@@ -13,7 +13,9 @@ import (
 	"github.com/ave1995/grpc-chat/domain/service"
 	"github.com/ave1995/grpc-chat/domain/store"
 	"github.com/ave1995/grpc-chat/service/message"
+	"github.com/ave1995/grpc-chat/store/cached"
 	"github.com/ave1995/grpc-chat/store/gormdb"
+	"github.com/ave1995/grpc-chat/store/memory"
 	"github.com/ave1995/grpc-chat/utils"
 	"gorm.io/gorm"
 )
@@ -28,8 +30,14 @@ type Factory struct {
 	db     *gorm.DB
 	dbOnce sync.Once
 
+	memoryCache     *memory.Cache
+	memoryCacheOnce sync.Once
+
 	messageStore     *gormdb.MessageStore
 	messageStoreOnce sync.Once
+
+	cachedMessageStore     *cached.MessageStore
+	cachedMessageStoreOnce sync.Once
 
 	kafkaProducer     *kafka.Producer
 	kafkaProducerOnce sync.Once
@@ -72,12 +80,28 @@ func (f *Factory) Database() *gorm.DB {
 	return f.db
 }
 
+func (f *Factory) MemoryCache() *memory.Cache {
+	f.memoryCacheOnce.Do(func() {
+		// TODO: config
+		f.memoryCache = memory.NewCache(10)
+	})
+	return f.memoryCache
+}
+
 func (f *Factory) MessageStore() store.MessageStore {
 	f.messageStoreOnce.Do(func() {
 		f.messageStore = gormdb.NewMessageStore(f.Database())
 	})
 
 	return f.messageStore
+}
+
+func (f *Factory) MemoryMessageStore() store.MessageStore {
+	f.cachedMessageStoreOnce.Do(func() {
+		f.cachedMessageStore = cached.NewMessageStore(f.Logger(), f.MessageStore(), f.MemoryCache())
+	})
+
+	return f.cachedMessageStore
 }
 
 func (f *Factory) KafkaProducer() connector.Producer {
@@ -100,7 +124,8 @@ func (f *Factory) MessageService() service.MessageService {
 	f.messageServiceOnce.Do(func() {
 		f.messageService = message.NewService(
 			f.config.MessageServiceConfig(),
-			f.MessageStore(),
+			//f.MessageStore(),
+			f.MemoryMessageStore(),
 			f.Hub(),
 		)
 	})
