@@ -31,7 +31,7 @@ func NewCache(cleanupInterval time.Duration) *Cache {
 }
 
 // Set stores a value with an optional TTL (0 = no expiration)
-func (mc *Cache) Set(ctx context.Context, key string, value any, ttl time.Duration) error {
+func (mc *Cache) Set(ctx context.Context, key string, value []byte, ttl time.Duration) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
@@ -50,7 +50,7 @@ func (mc *Cache) Set(ctx context.Context, key string, value any, ttl time.Durati
 }
 
 // Get retrieves a value if present and not expired
-func (mc *Cache) Get(ctx context.Context, key string) (any, bool, error) {
+func (mc *Cache) Get(ctx context.Context, key string) ([]byte, bool, error) {
 	select {
 	case <-ctx.Done():
 		return nil, false, ctx.Err()
@@ -130,13 +130,7 @@ func (mc *Cache) Clear(ctx context.Context) error {
 }
 
 // Close stops background cleanup
-func (mc *Cache) Close(ctx context.Context) error {
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	default:
-	}
-
+func (mc *Cache) Close() error {
 	close(mc.stopChan)
 	return nil
 }

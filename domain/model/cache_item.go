@@ -1,6 +1,6 @@
 package model
 
 type CacheItem struct {
-	Value      any
+	Value      []byte
 	Expiration int64
 }

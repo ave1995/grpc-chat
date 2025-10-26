@@ -6,12 +6,12 @@ import (
 )
 
 type Cache interface {
-	// Set stores a value with an optional TTL (0 = no expiration)
-	Set(ctx context.Context, key string, value any, ttl time.Duration) error
+	// Set stores a data with an optional TTL (0 = no expiration)
+	Set(ctx context.Context, key string, data []byte, ttl time.Duration) error
 
-	// Get retrieves a value by key.
-	// Returns (value, true) if found and not expired, otherwise (nil, false)
-	Get(ctx context.Context, key string) (any, bool, error)
+	// Get retrieves a data by key.
+	// Returns (data, true) if found and not expired, otherwise (nil, false)
+	Get(ctx context.Context, key string) ([]byte, bool, error)
 
 	// Delete removes a key.
 	Delete(ctx context.Context, key string) error
@@ -26,5 +26,5 @@ type Cache interface {
 	Clear(ctx context.Context) error
 
 	// Close gracefully shuts down the cache (e.g., closes Redis connection)
-	Close(ctx context.Context) error
+	Close() error
 }

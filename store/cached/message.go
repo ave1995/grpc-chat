@@ -2,6 +2,7 @@ package cached
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 
@@ -26,7 +27,12 @@ func (c MessageStore) Fetch(ctx context.Context, id model.MessageID) (*model.Mes
 	val, ok, err := c.cache.Get(ctx, id.String())
 	if ok {
 		c.logger.Info("→ cache hit")
-		return val.(*model.Message), nil
+		var msg model.Message
+		if err := json.Unmarshal(val, &msg); err != nil {
+			c.logger.Error("→ cache unmarshal error", utils.SlogError(err))
+		} else {
+			return &msg, nil
+		}
 	}
 	if err != nil {
 		c.logger.Error("→ cache error", utils.SlogError(err))
@@ -39,7 +45,12 @@ func (c MessageStore) Fetch(ctx context.Context, id model.MessageID) (*model.Mes
 		return nil, fmt.Errorf("cache fetch error: %w", err)
 	}
 
-	err = c.cache.Set(ctx, msg.ID.String(), msg, 0)
+	data, err := json.Marshal(msg)
+	if err != nil {
+		return nil, fmt.Errorf("cache marshal error: %w", err)
+	}
+
+	err = c.cache.Set(ctx, msg.ID.String(), data, 0)
 	if err != nil {
 		return nil, fmt.Errorf("cache set error: %w", err)
 	}
@@ -53,7 +64,12 @@ func (c MessageStore) Create(ctx context.Context, text string) (*model.Message, 
 		return nil, fmt.Errorf("cache create error: %w", err)
 	}
 
-	err = c.cache.Set(ctx, msg.ID.String(), msg, 0)
+	data, err := json.Marshal(msg)
+	if err != nil {
+		return nil, fmt.Errorf("cache marshal error: %w", err)
+	}
+
+	err = c.cache.Set(ctx, msg.ID.String(), data, 0)
 	if err != nil {
 		return nil, fmt.Errorf("cache set error: %w", err)
 	}

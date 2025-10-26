@@ -16,6 +16,7 @@ import (
 	"github.com/ave1995/grpc-chat/store/cached"
 	"github.com/ave1995/grpc-chat/store/gormdb"
 	"github.com/ave1995/grpc-chat/store/memory"
+	"github.com/ave1995/grpc-chat/store/redis"
 	"github.com/ave1995/grpc-chat/utils"
 	"gorm.io/gorm"
 )
@@ -32,6 +33,9 @@ type Factory struct {
 
 	memoryCache     *memory.Cache
 	memoryCacheOnce sync.Once
+
+	redisCache     *redis.Cache
+	redisCacheOnce sync.Once
 
 	messageStore     *gormdb.MessageStore
 	messageStoreOnce sync.Once
@@ -88,6 +92,13 @@ func (f *Factory) MemoryCache() *memory.Cache {
 	return f.memoryCache
 }
 
+func (f *Factory) RedisCache() *redis.Cache {
+	f.redisCacheOnce.Do(func() {
+		f.redisCache = redis.NewCache("localhost:6379", "", 0)
+	})
+	return f.redisCache
+}
+
 func (f *Factory) MessageStore() store.MessageStore {
 	f.messageStoreOnce.Do(func() {
 		f.messageStore = gormdb.NewMessageStore(f.Database())
@@ -96,9 +107,14 @@ func (f *Factory) MessageStore() store.MessageStore {
 	return f.messageStore
 }
 
-func (f *Factory) MemoryMessageStore() store.MessageStore {
+func (f *Factory) CachedMessageStore() store.MessageStore {
 	f.cachedMessageStoreOnce.Do(func() {
-		f.cachedMessageStore = cached.NewMessageStore(f.Logger(), f.MessageStore(), f.MemoryCache())
+		f.cachedMessageStore = cached.NewMessageStore(
+			f.Logger(),
+			f.MessageStore(),
+			//f.MemoryCache(),
+			f.RedisCache(),
+		)
 	})
 
 	return f.cachedMessageStore
@@ -125,7 +141,7 @@ func (f *Factory) MessageService() service.MessageService {
 		f.messageService = message.NewService(
 			f.config.MessageServiceConfig(),
 			//f.MessageStore(),
-			f.MemoryMessageStore(),
+			f.CachedMessageStore(),
 			f.Hub(),
 		)
 	})
@@ -153,6 +169,20 @@ func (f *Factory) Close() {
 			} else {
 				logger.Info("database connection closed")
 			}
+		}
+	}
+
+	if f.redisCache != nil {
+		err := f.redisCache.Close()
+		if err != nil {
+			logger.Error("close redis cache: ", utils.SlogError(err))
+		}
+	}
+
+	if f.memoryCache != nil {
+		err := f.memoryCache.Close()
+		if err != nil {
+			logger.Error("close memory cache: ", utils.SlogError(err))
 		}
 	}
 
