@@ -36,6 +36,10 @@ func (c *Consumer) Start(ctx context.Context) {
 			select {
 			case <-ctx.Done():
 				c.logger.Info("[Kafka] consumer shutting down")
+				err := c.reader.Close()
+				if err != nil {
+					c.logger.Error("[Kafka] close reader error:", err)
+				}
 				return
 			default:
 				msg, err := c.reader.ReadMessage(ctx)
