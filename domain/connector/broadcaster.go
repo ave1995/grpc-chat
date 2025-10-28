@@ -1,9 +1,9 @@
 package connector
 
 import (
-	"github.com/segmentio/kafka-go"
+	"github.com/ave1995/grpc-chat/domain/model"
 )
 
 type Broadcaster interface {
-	Broadcast(msg kafka.Message) error
+	Broadcast(msg *model.Message) error
 }

@@ -1,8 +1,12 @@
 package connector
 
-import "context"
+import (
+	"context"
+
+	"github.com/ave1995/grpc-chat/domain/model"
+)
 
 // Consumer defines the interface for reading messages from Kafka topics.
 type Consumer interface {
-	Start(ctx context.Context)
+	Read(ctx context.Context) (<-chan model.Message, error)
 }

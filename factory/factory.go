@@ -10,7 +10,6 @@ import (
 	"github.com/ave1995/grpc-chat/config"
 	"github.com/ave1995/grpc-chat/connector/kafka"
 	"github.com/ave1995/grpc-chat/domain/connector"
-	"github.com/ave1995/grpc-chat/domain/service"
 	"github.com/ave1995/grpc-chat/domain/store"
 	"github.com/ave1995/grpc-chat/service/message"
 	"github.com/ave1995/grpc-chat/store/cached"
@@ -18,6 +17,7 @@ import (
 	"github.com/ave1995/grpc-chat/store/memory"
 	"github.com/ave1995/grpc-chat/store/redis"
 	"github.com/ave1995/grpc-chat/utils"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -45,6 +45,9 @@ type Factory struct {
 
 	kafkaProducer     *kafka.Producer
 	kafkaProducerOnce sync.Once
+
+	kafkaConsumer     *kafka.Consumer
+	kafkaConsumerOnce sync.Once
 
 	hub     *message.Hub
 	hubOnce sync.Once
@@ -122,10 +125,18 @@ func (f *Factory) CachedMessageStore() store.MessageStore {
 
 func (f *Factory) KafkaProducer() connector.Producer {
 	f.kafkaProducerOnce.Do(func() {
-		f.kafkaProducer = kafka.NewKafkaProducer(f.config.KafkaConfig())
+		f.kafkaProducer = kafka.NewKafkaProducer(f.Logger(), f.config.KafkaConfig())
 	})
 
 	return f.kafkaProducer
+}
+
+func (f *Factory) KafkaConsumer() connector.Consumer {
+	f.kafkaConsumerOnce.Do(func() {
+		f.kafkaConsumer = kafka.NewKafkaConsumer(f.Logger(), f.config.KafkaConfig().Brokers, f.config.MessageTopic, uuid.New().String())
+	})
+
+	return f.kafkaConsumer
 }
 
 func (f *Factory) Hub() *message.Hub {
@@ -136,13 +147,15 @@ func (f *Factory) Hub() *message.Hub {
 	return f.hub
 }
 
-func (f *Factory) MessageService() service.MessageService {
+func (f *Factory) MessageService() *message.Service {
 	f.messageServiceOnce.Do(func() {
 		f.messageService = message.NewService(
+			f.Logger(),
 			f.config.MessageServiceConfig(),
 			//f.MessageStore(),
 			f.CachedMessageStore(),
 			f.Hub(),
+			f.KafkaConsumer(),
 		)
 	})
 

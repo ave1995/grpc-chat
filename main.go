@@ -14,7 +14,6 @@ import (
 	pb "github.com/ave1995/grpc-chat/api/grpc/proto"
 	"github.com/ave1995/grpc-chat/api/grpc/server"
 	"github.com/ave1995/grpc-chat/config"
-	"github.com/ave1995/grpc-chat/connector/kafka"
 	"github.com/ave1995/grpc-chat/factory"
 	"github.com/ave1995/grpc-chat/utils"
 )
@@ -37,11 +36,11 @@ func main() {
 		os.Exit(1)
 	}
 
+	messageService := fact.MessageService()
+	messageService.Broadcast(ctx)
+
 	grpcServer := grpc.NewServer()
 	pb.RegisterChatServiceServer(grpcServer, server.NewChatServer(logger, fact.MessageService()))
-
-	consumer := kafka.NewKafkaConsumer(logger, cfg.KafkaConfig().Brokers, "messages", "", fact.Hub())
-	consumer.Start(ctx)
 
 	outboxStore := gormdb.NewOutboxStore(fact.Database())
 

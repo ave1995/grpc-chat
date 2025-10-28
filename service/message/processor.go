@@ -46,6 +46,8 @@ func (p *Processor) processPending(ctx context.Context) error {
 			continue
 		}
 
+		p.logger.Info("sent message", "id", event.ID)
+
 		if err := p.store.MarkProcessed(ctx, event.ID); err != nil {
 			// TODO: how to approach this
 			p.logger.Error("failed to mark processed", "error", err, "id", event.ID)
